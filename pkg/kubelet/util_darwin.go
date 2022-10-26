@@ -1,3 +1,6 @@
+//go:build darwin
+// +build darwin
+
 /*
 Copyright 2021.
 
@@ -14,20 +17,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cgroup
+package kubelet 
 
-import (
-	"testing"
+import "encoding/binary"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-)
-
-func TestPodLoader(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "CGroup Suite")
+func GetCgroupIDFromPath(byteOrder binary.ByteOrder, path string) (uint64, error) {
+	// to do for Mac OS how to get CGROUP ID from path
+	return uint64(0), nil
 }
-
-var _ = BeforeSuite(func() {
-        _, _ = Init()
-})

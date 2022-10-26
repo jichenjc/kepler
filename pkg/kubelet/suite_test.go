@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package podlister
+package kubelet 
 
 import (
 	"testing"
@@ -29,5 +29,5 @@ func TestPodLoader(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	_, _ = Init()
+	// _, _ = Init()
 })

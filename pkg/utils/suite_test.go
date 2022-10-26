@@ -1,6 +1,3 @@
-//go:build linux
-// +build linux
-
 /*
 Copyright 2021.
 
@@ -17,20 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package podlister
+package utils
 
 import (
-	"fmt"
+	"testing"
 
-	"encoding/binary"
-
-	"golang.org/x/sys/unix"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-func getCgroupIDFromPath(byteOrder binary.ByteOrder, path string) (uint64, error) {
-	handle, _, err := unix.NameToHandleAt(unix.AT_FDCWD, path, 0)
-	if err != nil {
-		return uint64(0), fmt.Errorf("error resolving handle: %v", err)
-	}
-	return byteOrder.Uint64(handle.Bytes()), nil
+func TestUtils(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Utils Suite")
 }
+
+var _ = BeforeSuite(func() {
+})

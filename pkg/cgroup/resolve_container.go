@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package podlister
+package cgroup 
 
 import (
 	"bufio"
@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"github.com/sustainable-computing-io/kepler/pkg/config"
+	"github.com/sustainable-computing-io/kepler/pkg/kubelet"
 	"github.com/sustainable-computing-io/kepler/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
@@ -40,8 +41,6 @@ type ContainerInfo struct {
 }
 
 const (
-	systemProcessName      string = "system_processes"
-	systemProcessNamespace string = "system"
 	unknownPath            string = "unknown"
 
 	procPath   string = "/proc/%d/cgroup"
@@ -50,7 +49,7 @@ const (
 
 var (
 	byteOrder binary.ByteOrder = utils.DetermineHostByteOrder()
-	podLister KubeletPodLister = KubeletPodLister{}
+	podLister kubelet.KubeletPodLister = kubelet.KubeletPodLister{}
 
 	// map to cache data to speedup lookups
 	containerIDCache           = map[uint64]string{}
@@ -69,14 +68,6 @@ var (
 
 func Init() (*[]corev1.Pod, error) {
 	return updateListPodCache("", false)
-}
-
-func GetSystemProcessName() string {
-	return systemProcessName
-}
-
-func GetSystemProcessNamespace() string {
-	return systemProcessNamespace
 }
 
 func GetPodName(cGroupID, pid uint64) (string, error) {
@@ -111,10 +102,10 @@ func getContainerInfo(cGroupID, pid uint64) (*ContainerInfo, error) {
 	var err error
 	var containerID string
 	info := &ContainerInfo{
-		ContainerID:   systemProcessName,
-		ContainerName: systemProcessName,
-		PodName:       systemProcessName,
-		Namespace:     systemProcessNamespace,
+		ContainerID:   utils.GetSystemProcessName(),
+		ContainerName: utils.GetSystemProcessName(),
+		PodName:       utils.GetSystemProcessName(),
+		Namespace:     utils.GetSystemProcessNamespace(),
 	}
 
 	if containerID, err = getContainerIDFromPath(cGroupID, pid); err != nil {
@@ -134,8 +125,8 @@ func getContainerInfo(cGroupID, pid uint64) (*ContainerInfo, error) {
 	// in the case the containerID is not a kubernetes container, the updateListPodCache will not add it to the cache
 	if _, ok := containerIDToContainerInfo[containerID]; !ok {
 		// some system process might have container ID, but we need to replace it if the container is not a kubernetes container
-		if info.ContainerName == systemProcessName {
-			containerID = systemProcessName
+		if info.ContainerName == utils.GetSystemProcessName() {
+			containerID = utils.GetSystemProcessName()
 		}
 	}
 
@@ -218,7 +209,7 @@ func getContainerIDFromPID(pid uint64) (string, error) {
 	var err error
 	var path string
 	if path, err = getPathFromPID(procPath, pid); err != nil {
-		return systemProcessName, err
+		return utils.GetSystemProcessName(), err
 	}
 
 	containerIDCache[pid], err = extractPodContainerIDfromPath(path)
@@ -251,7 +242,7 @@ func getContainerIDFromcGroupID(cGroupID uint64) (string, error) {
 	var err error
 	var path string
 	if path, err = getPathFromcGroupID(cGroupID); err != nil {
-		return systemProcessName, err
+		return utils.GetSystemProcessName(), err
 	}
 
 	containerIDCache[cGroupID], err = extractPodContainerIDfromPath(path)
@@ -273,7 +264,7 @@ func getPathFromcGroupID(cgroupID uint64) (string, error) {
 		if !dentry.IsDir() {
 			return nil
 		}
-		getCgroupID, err := getCgroupIDFromPath(byteOrder, path)
+		getCgroupID, err := kubelet.GetCgroupIDFromPath(byteOrder, path)
 		if err != nil {
 			return fmt.Errorf("error resolving handle: %v", err)
 		}
@@ -316,7 +307,7 @@ func extractPodContainerIDfromPath(path string) (string, error) {
 			return containerID, nil
 		}
 	}
-	return systemProcessName, fmt.Errorf("failed to find pod's container id")
+	return utils.GetSystemProcessName(), fmt.Errorf("failed to find pod's container id")
 }
 
 // GetAliveContainers returns alive pod map
